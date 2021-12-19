@@ -7,16 +7,15 @@ public class Main {
     public static void main(String[] args) {
 
         String[][] strArr = new String[4][4];
-        arrayFiller(strArr, false);
-        printArray(strArr);
-        System.out.println();
+        arrayFiller(strArr, true);
 
         try {
             MyArraySummaraizer arraySummaraizer = new MyArraySummaraizer(strArr);
             System.out.println("Сумма элементов массива: " + arraySummaraizer.summarize());
         }
         catch (MyArraySizeException e){
-            System.out.println("Массив не 4х4. Программа не будет работать.");
+            System.out.println(e.getMessage());
+            System.out.printf("Вы прислали массив с размером: %d. Требуемый размер: %d.\n\n", e.getProvidedSize(), e.getRequiredSize());
         }
         catch (MyArrayDataException e){
             System.out.println("В массиве содержатся не числовые значения. Программа не будет работать.");
@@ -25,7 +24,8 @@ public class Main {
             System.out.println("Ooops! Something wrong!");
         }
 
-
+        printArray(strArr);
+        System.out.println();
 
     }
 
@@ -52,6 +52,11 @@ public class Main {
         }
     }
 
+
+    /**
+     * просто красиво рисует двумерный массив в консоли
+     * @param arr двумерный массив
+     */
     static void printArray(String[][] arr) {
         for (int i = 0; i < arr.length; i++) {
             for (int j = 0; j < arr[i].length; j++) {
