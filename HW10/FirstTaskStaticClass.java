@@ -2,12 +2,13 @@ package HW10;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class FirstTaskStaticClass {
 
     /**
-     * Копирует массив строк в HashSet, чтобы удалить дубликаты и вы водит список в консоль
+     * Копирует массив строк в HashSet, чтобы удалить дубликаты и выводит список в консоль
      * @param arr массив строк
      */
     public static void showUniqueWords(String[] arr){
@@ -25,12 +26,12 @@ public class FirstTaskStaticClass {
         Set<String> set = new HashSet<>(Arrays.stream(arr).toList());
         for (String s: set) {
             for(String a: arr){
-                if (s == a){
+                if (s.equals(a)){
                     count++;
                 }
             }
             System.out.printf("Слово %s встречается %d раз.\n",s,count);
-            count = 0;
+            count = 0; //обнуляем счётчик перед следующей итерацией
         }
     }
 }
