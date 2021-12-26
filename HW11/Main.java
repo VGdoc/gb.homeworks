@@ -30,6 +30,55 @@ public class Main {
 
         //////////////////////   Задание 3 тесты   ///////////////////////////
         System.out.println("\n********** Задание 3 тесты *************");
+
+        Box<Fruit> box1 = new Box<>();
+        Box<Fruit> box2 = new Box<>();
+        Box<Fruit> box3 = new Box<>();
+        Orange[] bulkOranges = new Orange[6]; //массив с апельсинами
+        for (int i = 0; i < bulkOranges.length; i++){
+            bulkOranges[i] = new Orange();
+        }
+        Apple[] bulkApples = new Apple[11]; //массив с яблоками
+        for (int i = 0; i < bulkApples.length; i++){
+            bulkApples[i] = new Apple();
+        }
+
+
+        box1.putFruits(new Orange()); // добавляем 1 апельсин в пустую коробку
+        box2.putFruits(bulkOranges);  // добавляем 5 апельсинов в пустую коробку
+        box3.putFruits(new Apple());  // добавляем яблоко в пустую коробку
+        System.out.println("***");
+
+
+        box1.putFruits(new Apple());  // пытаемся добавить яблоко в коробку с папельсином
+        System.out.println("-");
+        box1.putFruits(new Orange()); // добавляем еще 1 апельсин
+        System.out.println("-");
+        box1.putFruits(box3); // пытаемся пересыпать яблоко в коробку с апельсином
+        System.out.println("-");
+        box1.putFruits(box2); // пересыпаем апельсины со второй коробки в первую
+        System.out.println("***");
+        System.out.println("Коробка 1 - " + box1);
+        System.out.println("Коробка 2 - " + box2);
+        System.out.println("Коробка 3 - " + box3);
+
+
+        System.out.println("\n*** Сравнение веса коробок ***");
+        box3.putFruits(bulkApples); // добавляем 11 яблок в корбку, чтобы получить одинаковый вес
+        System.out.println("Коробка 1 - " + box1);
+        System.out.println("Коробка 2 - " + box2);
+        System.out.println("Коробка 3 - " + box3);
+        System.out.println("Сравниваем вес box1 и box2: " + box1.compare(box2));
+        System.out.println("Сравниваем вес box1 и box3: " + box1.compare(box3));
+
+
+        System.out.println("\n*** Высыпаем ИЗ коробки в другую ***");
+        box1.unloadTo(box3); // пытаемся высыпать к яблокам
+        box1.unloadTo(box2); // пересыпаем в пустую коробку
+        System.out.println("Коробка 1 - " + box1);
+        System.out.println("Коробка 2 - " + box2);
+        System.out.println("Коробка 3 - " + box3);
+
     }
 
     //region Метод для задания 1
