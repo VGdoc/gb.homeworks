@@ -1,12 +1,14 @@
 package HW12;
 
 
+import java.util.Arrays;
+
 public class Main extends Thread {
 
     static final int SIZE = 10000000;
-    static final int HALF = SIZE / 2;
     static float[] arr1 = new float[SIZE];
     static float[] arr2 = new float[SIZE];
+    static int optimalFinderThreadCounter; // упрощает работу метода optimalFinder, запоминает оптимальное кол-во потоков
 
 
     public static void main(String[] args) throws InterruptedException {
@@ -19,9 +21,10 @@ public class Main extends Thread {
 
         method1();
         System.out.println("***********");
-        method2();
+        method2(6); ////////////////// можно указать колличество потоков
 
-
+        // мой лучший результат 62 потока (105 милисек)
+        //System.out.println("Лучшее время выполнения метода method2(): " + optimalFinder(100) + "милисек. достигнуто при использовании " + optimalFinderThreadCounter + " потоков!");
     }
 
     /**
@@ -34,67 +37,117 @@ public class Main extends Thread {
         arrFormula(arr1);
 
         System.out.printf("Время выполнения метода 1: %d милисекунд.\n", System.currentTimeMillis() - a);
-        System.out.println("Сумма элементов: " + arrSum(arr1));
     }
 
     /**
-     * метод с 2мя потоками по заданию
-     * @throws InterruptedException чтобы не писать try/catch везде
+     * 2й метод для задания, дробит подсчёт на потоки
+     *
+     * @param threadCounts кол-во потоков
+     * @throws InterruptedException чтобы не писать везде трай кеч
      */
-    static void method2() throws InterruptedException {
-        float[] a1 = new float[HALF]; // половины массива временные
-        float[] a2 = new float[HALF];
+    static void method2(int threadCounts) throws InterruptedException {
 
-        Runnable runnable1 = () -> { /////////////////// переменные интерфейса? оО с реализацией метода run()
-            arrFormula(a1);
-            System.out.println("Первая половина посчитана");
-        };
+        ///////////// создаём временные массивы для подсчёты в разных потоках
+        float[][] arrayPart = new float[threadCounts][];
+        for (int i = 0; i < threadCounts; i++) {
+            if (SIZE % threadCounts != 0 && i + 1 == threadCounts) {
+                //добавляем остаточные элементы к последнему массиву если, при делении массива есть остаток
+                //это работает неоптимально (напр. Массив - 10 эл, 6 потоков. Будет обработано(эл) 1 + 1 + 1 + 1 + 1 + 5),
+                //но работает. С миллионными массивами незаметно
+                arrayPart[i] = new float[SIZE / threadCounts + SIZE % threadCounts];
+            } else {
+                arrayPart[i] = new float[SIZE / threadCounts];
+            }
 
-        Runnable runnable2 = () -> {
-            arrFormula(a2);
-            System.out.println("Вторая половина посчитана");
-        };
+        }
+
+
+        //////////////  создаём массив... методов... с разными частями массива для подсчёта в потоках. Как-то так
+        Runnable[] runnables = new Runnable[threadCounts];
+        for (int i = 0; i < threadCounts; i++) {
+            int finalI = i;
+            runnables[i] = () -> {
+                arrFormula(arrayPart[finalI]);
+                System.out.printf("Поток %d завершил подсчёт\n\n", finalI + 1);
+            };
+        }
+
 
         long a = System.currentTimeMillis(); // засекаем время
 
 
-        System.arraycopy(arr2, 0, a1, 0, HALF);
-        System.arraycopy(arr2, HALF, a2, 0, HALF);
-
-        Thread t1 = new Thread(runnable1);
-        Thread t2 = new Thread(runnable2);
-
-        t1.start();
-        t2.start();
-        t1.join(); // ждем, пока потоки всё посчитают
-        t2.join();
+        ///////// копируем части нашего массива в массивы поменьше для потоков
+        for (int i = 0; i < threadCounts; i++) {
+            System.arraycopy(arr2, SIZE / threadCounts * i, arrayPart[i], 0, arrayPart[i].length);
+        }
 
 
-        System.arraycopy(a1, 0, arr2, 0, HALF); // собираем массив обратно
-        System.arraycopy(a2, 0, arr2, HALF, HALF);
+        /////////////// создаём потоки и запускаем
+        Thread[] threads = new Thread[threadCounts];
+        for (int i = 0; i < threadCounts; i++) {
+            threads[i] = new Thread(runnables[i]);
+            threads[i].start();
+        }
+
+
+        //////////////// ждём завершения всех потоков
+        for (int i = 0; i < threadCounts; i++) {
+            threads[i].join();
+        }
+
+
+        //////////////// собираем наш массив обратно
+        for (int i = 0; i < threadCounts; i++) {
+            System.arraycopy(arrayPart[i], 0, arr2, SIZE / threadCounts * i, arrayPart[i].length);
+        }
 
 
         System.out.printf("Время выполнения метода 2: %d милисекунд.\n", System.currentTimeMillis() - a);
-        System.out.println("Сумма элементов: " + arrSum(arr2)); // для теста
 
 
     }
 
-    ////////////////////////////////// вспомогательные методы
 
-
-
+    /**
+     * массив для вычислений в массиве по заданию
+     *
+     * @param arr массив
+     */
     public static void arrFormula(float[] arr) {
+        int testCounter = 0;
         for (int i = 0; i < arr.length; i++) {
             arr[i] = (float) (arr[i] * Math.sin(0.2f + i / 5) * Math.cos(0.2f + i / 5) * Math.cos(0.4f + i / 2));
+            testCounter++;
         }
+        System.out.printf("Было обработано %d элементов массива\n", testCounter); // для тестов
     }
 
-    static float arrSum(float[] arr) {
-        float result = 0;
-        for (float v : arr) {
-            result += v;
+
+    /**
+     * Метод помогает найти лучшее время по использованию разного колл-ва потоков
+     * @param threadsCount кол-во потоков для тестов
+     * @return лучшее время
+     * @throws InterruptedException чтобы не писать трай кеч
+     */
+    public static long optimalFinder(int threadsCount) throws InterruptedException {
+        long[] results = new long[threadsCount];
+
+
+        for (int i = 1; i <= threadsCount; i++) {
+            long a = System.currentTimeMillis(); // засекаем время
+            method2(i);
+            results[i-1] = System.currentTimeMillis() - a; // записываем минимальное время в массив
         }
-        return result;
+        long bestResult = results[0];
+        // находим лучшее время
+        for (int i = 0; i < threadsCount; i++) {
+            if (results[i] < bestResult) {
+                bestResult = results[i];
+                optimalFinderThreadCounter = i;
+            }
+        }
+        return bestResult;
+
+
     }
 }
